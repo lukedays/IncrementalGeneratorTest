@@ -6,15 +6,17 @@ using Microsoft.CodeAnalysis.Text;
 namespace SourceGenerators;
 
 [Generator]
-public class GenerateCachedFunction : IIncrementalGenerator
+public class GenerateCachedMethod : IIncrementalGenerator
 {
     const string generatedNs = "SourceGenerators";
-    const string generatedAttrib = "GenerateCachedFunctionAttribute";
+    const string generatedAttrib = "GenerateCachedMethodAttribute";
+    const string generatedService = "GenerateCachedMethodService";
 
     public void Initialize(IncrementalGeneratorInitializationContext initContext)
     {
         // Add the source for the cache attribute
         initContext.RegisterPostInitializationOutput(static context =>
+        {
             context.AddSource(
                 $"{generatedAttrib}.g.cs",
                 SourceText.From(
@@ -29,8 +31,24 @@ public class {{generatedAttrib}} : Attribute
 """,
                     Encoding.UTF8
                 )
-            )
-        );
+            );
+
+            context.AddSource(
+                $"{generatedService}.g.cs",
+                SourceText.From(
+                    $$"""
+namespace {{generatedNs}};
+using Microsoft.Extensions.Caching.Memory;
+
+public static class {{generatedService}}
+{
+    public static readonly MemoryCache Cache = new MemoryCache(new MemoryCacheOptions());
+}
+""",
+                    Encoding.UTF8
+                )
+            );
+        });
 
         // Retrieve method nodes with the cache attribute
         var methodNodes = initContext.SyntaxProvider.ForAttributeWithMetadataName(
@@ -106,14 +124,14 @@ public class {{generatedAttrib}} : Attribute
     {
         var key = $"{{m.MethodId}}.{{string.Join(".", m.ParamsNames.Select(x => $"{{{x}}}"))}}";
 
-        if (_cache.TryGetValue(key, out {{m.ReturnType}} value))
+        if ({{generatedService}}.Cache.TryGetValue(key, out {{m.ReturnType}} value))
         {
             return value;
         }
 
         value = {{m.MethodName}}({{string.Join(", ", m.ParamsNames)}});
 
-        _cache.Set(key, value, TimeSpan.FromMinutes({{m.CacheExpiration}}));
+        {{generatedService}}.Cache.Set(key, value, TimeSpan.FromMinutes({{m.CacheExpiration}}));
         return value;
     }
 """
@@ -124,11 +142,11 @@ public class {{generatedAttrib}} : Attribute
                 var sourceText = SourceText.From(
                     $$"""
 namespace {{node.Namespace}};
+using {{generatedNs}};
 using Microsoft.Extensions.Caching.Memory;
 
 {{node.ClassAccess}} partial class {{node.ClassName}}
 {
-    private static readonly IMemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
 {{methodsText}}
 }
 """,

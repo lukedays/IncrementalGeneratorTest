@@ -8,6 +8,9 @@ public partial class UserClass
     {
         Console.WriteLine(FuncACached(1, 1));
         Console.WriteLine(FuncACached(1, 1));
+        GenerateCachedMethodService.Cache.Clear();
+        Console.WriteLine(FuncACached(1, 1));
+        Console.WriteLine(FuncACached(1, 1));
         Console.WriteLine(FuncACached(1, 2));
 
         Console.WriteLine(FuncBCached(1));
@@ -15,14 +18,14 @@ public partial class UserClass
         Console.WriteLine(FuncBCached(1));
     }
 
-    [GenerateCachedFunction]
+    [GenerateCachedMethod]
     public static double FuncA(double a, double b)
     {
         Console.Write("Not cached ");
         return a + b;
     }
 
-    [GenerateCachedFunction]
+    [GenerateCachedMethod]
     public static string FuncB(double a)
     {
         Console.Write("Not cached ");
