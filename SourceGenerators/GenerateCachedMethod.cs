@@ -64,96 +64,65 @@ public static class {{generatedService}}
                         SymbolDisplayGlobalNamespaceStyle.Omitted
                     )
                 );
-                var classId = $"{ns}.{className}";
                 var method = (IMethodSymbol)context.TargetSymbol;
                 var methodName = method.Name;
-                var methodId = $"{classId}.{methodName}";
 
                 return new MethodNode
                 {
                     ClassName = className,
                     ClassAccess = containingClass.DeclaredAccessibility.ToString().ToLower(),
+                    ClassIsStatic = containingClass.IsStatic ? "static" : "",
                     Namespace = ns,
                     MethodName = methodName,
                     ReturnType = method.ReturnType,
-                    ParamsDefinitions = method
-                        .Parameters.Select(x => x.OriginalDefinition.ToString())
-                        .ToList(),
+                    ParamsDefinitions = string.Join(
+                        ", ",
+                        method.Parameters.Select(x => x.OriginalDefinition.ToString()).ToList()
+                    ),
                     ParamsNames = method.Parameters.Select(x => x.Name).ToList(),
-                    IsStatic = method.IsStatic ? "static " : "",
+                    MethodIsStatic = method.IsStatic ? "static" : "",
                     MethodAccess = method.DeclaredAccessibility.ToString().ToLower(),
-                    ClassId = classId,
-                    MethodId = methodId,
+                    MethodId = $"{ns}.{className}.{methodName}",
                     CacheExpiration = (double)context.Attributes[0].ConstructorArguments[0].Value!
                 };
             }
         );
 
-        // Group method nodes by class and build class nodes
-        var classNodes = methodNodes
-            .Collect()
-            .SelectMany(
-                static (sm, _) =>
-                    sm.GroupBy(g => g.ClassId)
-                        .Select(g => new ClassNode
-                        {
-                            ClassId = g.Key,
-                            Namespace = g.First().Namespace,
-                            ClassAccess = g.First().ClassAccess,
-                            ClassName = g.First().ClassName,
-                            Methods = [.. g]
-                        })
-            );
-
         // Add the final source for the augmented methods
         initContext.RegisterSourceOutput(
-            classNodes,
+            methodNodes,
             (context, node) =>
             {
-                // Build method texts
-                var methodsText = new StringBuilder();
-                foreach (var m in node.Methods)
-                {
-                    methodsText.AppendLine(
-                        $$"""
-    
-{{m.MethodAccess}} {{m.IsStatic}}{{m.ReturnType}} {{m.MethodName}}Cached({{string.Join(
-                    ", ",
-                    m.ParamsDefinitions
-                )}})
-    {
-        var key = $"{{m.MethodId}}.{{string.Join(".", m.ParamsNames.Select(x => $"{{{x}}}"))}}";
-
-        if ({{generatedService}}.Cache.TryGetValue(key, out {{m.ReturnType}} value))
-        {
-            return value;
-        }
-
-        value = {{m.MethodName}}({{string.Join(", ", m.ParamsNames)}});
-
-        {{generatedService}}.Cache.Set(key, value, TimeSpan.FromMinutes({{m.CacheExpiration}}));
-        return value;
-    }
-"""
-                    );
-                }
-
-                // Build class texts
                 var sourceText = SourceText.From(
                     $$"""
 namespace {{node.Namespace}};
 using {{generatedNs}};
 using Microsoft.Extensions.Caching.Memory;
 
-{{node.ClassAccess}} partial class {{node.ClassName}}
+{{node.ClassAccess}} {{node.ClassIsStatic}} partial class {{node.ClassName}}
 {
-{{methodsText}}
+    {{node.MethodAccess}} {{node.MethodIsStatic}} {{node.ReturnType}} {{node.MethodName}}Cached({{node.ParamsDefinitions}})
+    {
+        var key = $"{{node.MethodId}}.{{string.Join(
+                        ".",
+                        node.ParamsNames.Select(x => $"{{{x}}}")
+                    )}}";
+
+        if ({{generatedService}}.Cache.TryGetValue(key, out {{node.ReturnType}} value))
+        {
+            return value;
+        }
+
+        value = {{node.MethodName}}({{string.Join(", ", node.ParamsNames)}});
+        {{generatedService}}.Cache.Set(key, value, TimeSpan.FromMinutes({{node.CacheExpiration}}));
+        return value;
+    }
 }
 """,
                     Encoding.UTF8
                 );
 
-                context.AddSource($"{node.ClassId}.g.cs", sourceText);
+                context.AddSource($"{node.MethodId}.g.cs", sourceText);
             }
         );
     }
