@@ -10,6 +10,10 @@ Clone the project. Build profiles: `ConsoleApp` for the target code, and `Genera
 
 Unfortunately VS 2022 (v. 17.10.0) [needs to be restarted](https://github.com/dotnet/roslyn/issues/50451) for Intellisense to pick up changes in the source generator project - so I found the [Source Generators Auto Update VS extension](https://marketplace.visualstudio.com/items?itemName=AlexanderGayko.AutoUpdateAssemblyName&ssr=false#review-details) to fix this. Changes in the target project work normally.
 
-### GenerateCachedFunction attribute
+### GenerateCachedMethod attribute
 
-The `GenerateCachedFunction` is a attribute-based source generator that automatically generates cached versions of methods in your C# code. It aims to improve performance by caching method results based on specified expiration times.
+Automatically generates cached versions of methods, to improve performance by caching method results based on specified expiration times.
+
+### GenerateDecoratorMethod attribute
+
+Creates actions to run before, after and on exceptions.

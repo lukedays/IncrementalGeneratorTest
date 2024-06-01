@@ -6,29 +6,36 @@ public partial class UserClass
 {
     public static void Main()
     {
-        Console.WriteLine(FuncACached(1, 1));
-        Console.WriteLine(FuncACached(1, 1));
+        // Testing cache
+        Console.WriteLine(MethodACached(1, 1));
+        Console.WriteLine(MethodACached(1, 1));
         GenerateCachedMethodService.Cache.Clear();
-        Console.WriteLine(FuncACached(1, 1));
-        Console.WriteLine(FuncACached(1, 1));
-        Console.WriteLine(FuncACached(1, 2));
+        Console.WriteLine(MethodACached(1, 1));
+        Console.WriteLine(MethodACached(1, 1));
+        Console.WriteLine(MethodACached(1, 2));
 
-        Console.WriteLine(FuncBCached(1));
-        Console.WriteLine(FuncBCached(2));
-        Console.WriteLine(FuncBCached(1));
+        // Testing decorator
+        Console.WriteLine(MethodB("a"));
+        Console.WriteLine(MethodC("a"));
     }
 
     [GenerateCachedMethod]
-    public static double FuncA(double a, double b)
+    public static double MethodA(double a, double b)
     {
         Console.Write("Not cached ");
         return a + b;
     }
 
-    [GenerateCachedMethod]
-    public static string FuncB(double a)
+    [GenerateDecoratedMethod(nameof(ExampleDecorator))]
+    private static string MethodBInner(string a)
     {
-        Console.Write("Not cached ");
-        return a.ToString();
+        Console.WriteLine("Implementation");
+        return $"Call returned with parameter {a}";
+    }
+
+    [GenerateDecoratedMethod(nameof(ExampleDecorator))]
+    private static string MethodCInner(string a)
+    {
+        throw new Exception("Oops");
     }
 }

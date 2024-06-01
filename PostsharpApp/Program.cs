@@ -9,26 +9,36 @@ public class UserClass
     {
         CachingServices.DefaultBackend = new MemoryCachingBackend();
 
-        Console.WriteLine(FuncA(1, 1));
-        Console.WriteLine(FuncA(1, 1));
-        Console.WriteLine(FuncA(1, 2));
+        // Testing cache
+        Console.WriteLine(MethodA(1, 1));
+        Console.WriteLine(MethodA(1, 1));
+        CachingServices.DefaultBackend.Clear();
+        Console.WriteLine(MethodA(1, 1));
+        Console.WriteLine(MethodA(1, 1));
+        Console.WriteLine(MethodA(1, 2));
 
-        Console.WriteLine(FuncB(1));
-        Console.WriteLine(FuncB(2));
-        Console.WriteLine(FuncB(1));
+        // Testing decorator
+        Console.WriteLine(MethodB("a"));
+        Console.WriteLine(MethodC("a"));
     }
 
     [Cache]
-    public static double FuncA(double a, double b)
+    public static double MethodA(double a, double b)
     {
         Console.Write("Not cached ");
         return a + b;
     }
 
-    [Cache]
-    public static string FuncB(double a)
+    [LoggingAspect]
+    private static string MethodB(string a)
     {
-        Console.Write("Not cached ");
-        return a.ToString();
+        Console.WriteLine("Implementation");
+        return $"Call returned with parameter {a}";
+    }
+
+    [LoggingAspect]
+    private static string MethodC(string a)
+    {
+        throw new Exception("Oops");
     }
 }

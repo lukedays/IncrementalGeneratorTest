@@ -6,11 +6,10 @@ using Microsoft.CodeAnalysis.Text;
 namespace SourceGenerators;
 
 [Generator]
-public class GenerateCachedMethod : IIncrementalGenerator
+public class GenerateDecoratedMethod : IIncrementalGenerator
 {
     const string generatedNs = "SourceGenerators";
-    const string generatedAttrib = "GenerateCachedMethodAttribute";
-    const string generatedService = "GenerateCachedMethodService";
+    const string generatedAttrib = "GenerateDecoratedMethodAttribute";
 
     public void Initialize(IncrementalGeneratorInitializationContext initContext)
     {
@@ -22,17 +21,20 @@ public class GenerateCachedMethod : IIncrementalGenerator
                 SourceText.From(
                     $$"""
 namespace {{generatedNs}};
-using Microsoft.Extensions.Caching.Memory;
 
 [AttributeUsage(AttributeTargets.Method)]
 public class {{generatedAttrib}} : Attribute
 {
-    public {{generatedAttrib}}(double absoluteExpirationInMinutes = 30) { }
+    public {{generatedAttrib}}(string decoratorName, bool changeToPublic = true) { }
 }
 
-public static class {{generatedService}}
+public interface IDecorator
 {
-    public static readonly MemoryCache Cache = new MemoryCache(new MemoryCacheOptions());
+    public void OnStart();
+
+    public void OnException(Exception ex);
+
+    public void OnEnd();
 }
 """,
                     Encoding.UTF8
@@ -57,7 +59,7 @@ public static class {{generatedService}}
                 var method = (IMethodSymbol)context.TargetSymbol;
                 var methodName = method.Name;
 
-                return new CachedMethodNode
+                return new DecoratedMethodNode
                 {
                     ClassName = className,
                     ClassStart =
@@ -70,42 +72,43 @@ public static class {{generatedService}}
                         method.Parameters.Select(x => x.OriginalDefinition.ToString()).ToList()
                     ),
                     ParamsNames = method.Parameters.Select(x => x.Name).ToList(),
-                    MethodStart =
-                        $"{method.DeclaredAccessibility.ToString().ToLower()} {(method.IsStatic ? "static" : "")}",
+                    MethodIsStatic = method.IsStatic ? "static" : "",
+                    MethodAccess = method.DeclaredAccessibility.ToString().ToLower(),
                     MethodId = $"{ns}.{className}.{methodName}",
-                    CacheExpiration = (double)context.Attributes[0].ConstructorArguments[0].Value!
+                    DecoratorName = (string)context.Attributes[0].ConstructorArguments[0].Value!,
+                    ChangeToPublic = (bool)context.Attributes[0].ConstructorArguments[1].Value!
                 };
             }
         );
 
-        // Add the final source for the augmented methods
+        //        // Add the final source for the augmented methods
         initContext.RegisterSourceOutput(
             methodNodes,
             (context, node) =>
             {
+                var access = node.ChangeToPublic ? "public" : node.MethodAccess;
+                var finalMethodName = node.MethodName.Replace("Inner", "");
                 var sourceText = SourceText.From(
                     $$"""
 namespace {{node.Namespace}};
 using {{generatedNs}};
-using Microsoft.Extensions.Caching.Memory;
-
+                    
 {{node.ClassStart}} partial class {{node.ClassName}}
 {
-    {{node.MethodStart}} {{node.ReturnType}} {{node.MethodName}}Cached({{node.ParamsDefinitions}})
+    {{access}} {{node.MethodIsStatic}} {{node.ReturnType}} {{finalMethodName}}({{node.ParamsDefinitions}})
     {
-        var key = $"{{node.MethodId}}.{{string.Join(
-                        ".",
-                        node.ParamsNames.Select(x => $"{{{x}}}")
-                    )}}";
-
-        if ({{generatedService}}.Cache.TryGetValue(key, out {{node.ReturnType}} value))
-        {
-            return value;
+        var decorator = new {{node.DecoratorName}}();
+        decorator.OnStart();
+        try {
+            return {{node.MethodName}}({{string.Join(", ", node.ParamsNames)}});
         }
-
-        value = {{node.MethodName}}({{string.Join(", ", node.ParamsNames)}});
-        {{generatedService}}.Cache.Set(key, value, TimeSpan.FromMinutes({{node.CacheExpiration}}));
-        return value;
+        catch (Exception ex) {
+            decorator.OnException(ex);
+        }
+        finally {
+            decorator.OnEnd();
+        }
+        return default;
     }
 }
 """,
