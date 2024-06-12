@@ -9,7 +9,7 @@
 		<LangVersion>latest</LangVersion>
 		<EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
 		<IsRoslynComponent>true</IsRoslynComponent>
-		<AssemblyName>SourceGenerators.76</AssemblyName>
+		<AssemblyName>SourceGenerators.77</AssemblyName>
 	</PropertyGroup>
 
 	<ItemGroup>
