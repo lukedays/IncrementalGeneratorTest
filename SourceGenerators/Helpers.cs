@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -6,7 +7,7 @@ namespace SourceGenerators;
 
 internal static class Helpers
 {
-    public static MethodNodeInfo ExtractMethodInfo(
+    public static MethodNodeInfo GetMethodInfo(
         GeneratorAttributeSyntaxContext context,
         string generatorType
     )
@@ -40,16 +41,19 @@ internal static class Helpers
         {
             ClassName = className,
             ClassModifiers = classSyntax.Modifiers.ToString(),
-            ClassConstraints = classSyntax.ConstraintClauses.ToString(),
+            ClassConstraints = GetTypeConstraints(containingClass.TypeParameters),
             ClassTypeParameters = classSyntax.TypeParameterList?.ToString() ?? "",
             Namespace = ns,
             ReturnType = method.ReturnType,
-            ParamsDefinitions = methodSyntax.ParameterList.ToString(),
-            ParamsCall = string.Join(",", method.Parameters.Select(p => p.Name)),
+            ParamsDefinitions = string.Join(
+                ", ",
+                method.Parameters.Select(p => $"{p.Type} {p.Name}")
+            ),
+            ParamsCall = string.Join(", ", method.Parameters.Select(p => p.Name)),
             MethodName = methodName,
             MethodAccessibility = method.DeclaredAccessibility.ToString().ToLower(),
             MethodModifiers = methodSyntax.Modifiers.ToString(),
-            MethodConstraints = methodSyntax.ConstraintClauses.ToString(),
+            MethodConstraints = GetTypeConstraints(method.TypeParameters),
             MethodTypeParameters = methodSyntax.TypeParameterList?.ToString() ?? "",
             Filename = methodId,
             CacheKey = cacheKey,
@@ -66,6 +70,25 @@ internal static class Helpers
                     ? (string)context.Attributes[0].ConstructorArguments[1].Value!
                     : null,
         };
+    }
+
+    private static string GetTypeConstraints(ImmutableArray<ITypeParameterSymbol> typeParams)
+    {
+        return string.Join(
+            " ",
+            typeParams.Select(t =>
+            {
+                var constraints = t.ConstraintTypes.Select(t => t.ToString()).ToList();
+                if (t.HasReferenceTypeConstraint)
+                    constraints.Add("class");
+                if (t.HasConstructorConstraint)
+                    constraints.Add("new()");
+                if (t.HasValueTypeConstraint)
+                    constraints.Add("struct");
+
+                return $"where {t.Name} : {string.Join(",", constraints)}";
+            })
+        );
     }
 
     private static bool ParamHasInterface(

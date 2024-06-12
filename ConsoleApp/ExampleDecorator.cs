@@ -4,9 +4,9 @@ using SourceGenerators;
 
 public class ExampleDecorator : IDecorator
 {
-    public void OnStart()
+    public void OnEntry()
     {
-        Console.WriteLine("OnStart");
+        Console.WriteLine("OnEntry");
     }
 
     public void OnException(Exception ex)
@@ -14,8 +14,8 @@ public class ExampleDecorator : IDecorator
         Console.WriteLine($"OnException {ex.Message}");
     }
 
-    public void OnEnd()
+    public void OnExit()
     {
-        Console.WriteLine("OnEnd");
+        Console.WriteLine("OnExit");
     }
 }

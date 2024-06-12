@@ -31,11 +31,11 @@ internal class {{generatedAttrib}} : Attribute
 
 internal interface IDecorator
 {
-    public void OnStart();
+    public void OnEntry();
 
     public void OnException(Exception ex);
 
-    public void OnEnd();
+    public void OnExit();
 }
 """,
                     Encoding.UTF8
@@ -47,7 +47,7 @@ internal interface IDecorator
         var nodes = initContext.SyntaxProvider.ForAttributeWithMetadataName(
             $"{generatedNs}.{generatedAttrib}",
             static (syntaxNode, _) => syntaxNode is BaseMethodDeclarationSyntax,
-            static (context, _) => Helpers.ExtractMethodInfo(context, "Decorator")
+            static (context, _) => Helpers.GetMethodInfo(context, "Decorator")
         );
 
         // Add the final source for the augmented methods
@@ -67,10 +67,10 @@ using {{generatedNs}};
                     
 {{node.ClassModifiers}} class {{node.ClassName}}{{node.ClassTypeParameters}} {{node.ClassConstraints}}
 {
-    {{decoratedMethodModifiers}} {{node.ReturnType}} {{decoratedMethodName}}{{node.MethodTypeParameters}}{{node.ParamsDefinitions}} {{node.MethodConstraints}}
+    {{decoratedMethodModifiers}} {{node.ReturnType}} {{decoratedMethodName}}{{node.MethodTypeParameters}}({{node.ParamsDefinitions}}) {{node.MethodConstraints}}
     {
         var decorator = new {{node.DecoratorName}}();
-        decorator.OnStart();
+        decorator.OnEntry();
         try {
             return {{node.MethodName}}({{node.ParamsCall}});
         }
@@ -78,7 +78,7 @@ using {{generatedNs}};
             decorator.OnException(ex);
         }
         finally {
-            decorator.OnEnd();
+            decorator.OnExit();
         }
         return default;
     }

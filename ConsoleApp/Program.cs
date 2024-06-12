@@ -8,12 +8,12 @@ public class Entry
 {
     public static void Main()
     {
-        UserClass<string>.TestAll();
+        UserClass<List<string>>.TestAll();
     }
 }
 
 public partial class UserClass<X>
-    where X : class
+    where X : IList<string>
 {
     public static void TestAll()
     {

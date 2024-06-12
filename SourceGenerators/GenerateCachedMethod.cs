@@ -44,7 +44,7 @@ internal static class {{generatedService}}
         var nodes = initContext.SyntaxProvider.ForAttributeWithMetadataName(
             $"{generatedNs}.{generatedAttrib}",
             static (syntaxNode, _) => syntaxNode is BaseMethodDeclarationSyntax,
-            static (context, _) => Helpers.ExtractMethodInfo(context, "Cache")
+            static (context, _) => Helpers.GetMethodInfo(context, "Cache")
         );
 
         // Add the final source for the augmented methods
@@ -60,7 +60,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 {{node.ClassModifiers}} class {{node.ClassName}}{{node.ClassTypeParameters}} {{node.ClassConstraints}}
 {
-    {{node.MethodModifiers}} {{node.ReturnType}} {{node.MethodName}}Cached{{node.MethodTypeParameters}}{{node.ParamsDefinitions}} {{node.MethodConstraints}}
+    {{node.MethodModifiers}} {{node.ReturnType}} {{node.MethodName}}Cached{{node.MethodTypeParameters}}({{node.ParamsDefinitions}}) {{node.MethodConstraints}}
     {
         var key = $"{{node.CacheKey}}";
 
