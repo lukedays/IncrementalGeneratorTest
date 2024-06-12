@@ -56,6 +56,7 @@ internal static class {{generatedService}}
                     $$"""
 namespace {{node.Namespace}};
 using {{generatedNs}};
+using System;
 using Microsoft.Extensions.Caching.Memory;
 
 {{node.ClassModifiers}} class {{node.ClassName}}{{node.ClassTypeParameters}} {{node.ClassConstraints}}
