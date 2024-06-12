@@ -27,11 +27,11 @@ internal static class Helpers
 
         var methodId = $"{ns}.{className}.{methodName}";
 
-        var iEnumSymbol = context.SemanticModel.Compilation.GetTypeByMetadataName(
-            typeof(IEnumerable).FullName
+        var iCollSymbol = context.SemanticModel.Compilation.GetTypeByMetadataName(
+            typeof(ICollection).FullName
         );
         var paramsPlaceholders = method.Parameters.Select(p =>
-            ParamHasInterface(p, iEnumSymbol)
+            ParamHasInterface(p, iCollSymbol)
                 ? $"{{string.Join(\",\", {p.Name}.Select(__param__ => __param__.ToString()))}}"
                 : $"{{{p.Name}}}"
         );
