@@ -21,14 +21,15 @@ public class GenerateDecoratedMethod : IIncrementalGenerator
                 SourceText.From(
                     $$"""
 namespace {{generatedNs}};
+using System;
 
 [AttributeUsage(AttributeTargets.Method)]
-public class {{generatedAttrib}} : Attribute
+internal class {{generatedAttrib}} : Attribute
 {
-    public {{generatedAttrib}}(string decoratorName, bool changeToPublic = true) { }
+    internal {{generatedAttrib}}(string decoratorName, string decoratedMethodAccessibility = "public") { }
 }
 
-public interface IDecorator
+internal interface IDecorator
 {
     public void OnStart();
 
@@ -43,64 +44,35 @@ public interface IDecorator
         });
 
         // Retrieve method nodes with the cache attribute
-        var methodNodes = initContext.SyntaxProvider.ForAttributeWithMetadataName(
+        var nodes = initContext.SyntaxProvider.ForAttributeWithMetadataName(
             $"{generatedNs}.{generatedAttrib}",
             static (syntaxNode, _) => syntaxNode is BaseMethodDeclarationSyntax,
-            static (context, _) =>
-            {
-                // Get class/method info
-                var containingClass = context.TargetSymbol.ContainingType;
-                var className = containingClass.Name;
-                var ns = containingClass.ContainingNamespace?.ToDisplayString(
-                    SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(
-                        SymbolDisplayGlobalNamespaceStyle.Omitted
-                    )
-                );
-                var method = (IMethodSymbol)context.TargetSymbol;
-                var methodName = method.Name;
-
-                return new DecoratedMethodNode
-                {
-                    ClassName = className,
-                    ClassStart =
-                        $"{containingClass.DeclaredAccessibility.ToString().ToLower()} {(containingClass.IsStatic ? "static" : "")}",
-                    Namespace = ns,
-                    MethodName = methodName,
-                    ReturnType = method.ReturnType,
-                    ParamsDefinitions = string.Join(
-                        ", ",
-                        method.Parameters.Select(x => x.OriginalDefinition.ToString()).ToList()
-                    ),
-                    ParamsNames = method.Parameters.Select(x => x.Name).ToList(),
-                    MethodIsStatic = method.IsStatic ? "static" : "",
-                    MethodAccess = method.DeclaredAccessibility.ToString().ToLower(),
-                    MethodId = $"{ns}.{className}.{methodName}",
-                    DecoratorName = (string)context.Attributes[0].ConstructorArguments[0].Value!,
-                    ChangeToPublic = (bool)context.Attributes[0].ConstructorArguments[1].Value!
-                };
-            }
+            static (context, _) => Helpers.ExtractMethodInfo(context, "Decorator")
         );
 
-        //        // Add the final source for the augmented methods
+        // Add the final source for the augmented methods
         initContext.RegisterSourceOutput(
-            methodNodes,
-            (context, node) =>
+            nodes,
+            static (context, node) =>
             {
-                var access = node.ChangeToPublic ? "public" : node.MethodAccess;
-                var finalMethodName = node.MethodName.Replace("Inner", "");
+                var decoratedMethodName = node.MethodName.Replace("Inner", "");
+                var decoratedMethodModifiers = node.MethodModifiers.Replace(
+                    node.MethodAccessibility,
+                    node.DecoratedMethodAccessibility
+                );
                 var sourceText = SourceText.From(
                     $$"""
 namespace {{node.Namespace}};
 using {{generatedNs}};
                     
-{{node.ClassStart}} partial class {{node.ClassName}}
+{{node.ClassModifiers}} class {{node.ClassName}}{{node.ClassTypeParameters}} {{node.ClassConstraints}}
 {
-    {{access}} {{node.MethodIsStatic}} {{node.ReturnType}} {{finalMethodName}}({{node.ParamsDefinitions}})
+    {{decoratedMethodModifiers}} {{node.ReturnType}} {{decoratedMethodName}}{{node.MethodTypeParameters}}{{node.ParamsDefinitions}} {{node.MethodConstraints}}
     {
         var decorator = new {{node.DecoratorName}}();
         decorator.OnStart();
         try {
-            return {{node.MethodName}}({{string.Join(", ", node.ParamsNames)}});
+            return {{node.MethodName}}({{node.ParamsCall}});
         }
         catch (Exception ex) {
             decorator.OnException(ex);
@@ -115,7 +87,7 @@ using {{generatedNs}};
                     Encoding.UTF8
                 );
 
-                context.AddSource($"{node.MethodId}.g.cs", sourceText);
+                context.AddSource($"{node.Filename}.g.cs", sourceText);
             }
         );
     }

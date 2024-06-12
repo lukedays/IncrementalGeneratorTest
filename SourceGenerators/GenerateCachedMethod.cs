@@ -14,7 +14,6 @@ public class GenerateCachedMethod : IIncrementalGenerator
 
     public void Initialize(IncrementalGeneratorInitializationContext initContext)
     {
-        // Add the source for the cache attribute
         initContext.RegisterPostInitializationOutput(static context =>
         {
             context.AddSource(
@@ -22,17 +21,18 @@ public class GenerateCachedMethod : IIncrementalGenerator
                 SourceText.From(
                     $$"""
 namespace {{generatedNs}};
+using System;
 using Microsoft.Extensions.Caching.Memory;
 
 [AttributeUsage(AttributeTargets.Method)]
-public class {{generatedAttrib}} : Attribute
+internal class {{generatedAttrib}} : Attribute
 {
-    public {{generatedAttrib}}(double absoluteExpirationInMinutes = 30) { }
+    internal {{generatedAttrib}}(double absoluteExpirationInMinutes = 30) { }
 }
 
-public static class {{generatedService}}
+internal static class {{generatedService}}
 {
-    public static readonly MemoryCache Cache = new MemoryCache(new MemoryCacheOptions());
+    internal static readonly MemoryCache Cache = new MemoryCache(new MemoryCacheOptions());
 }
 """,
                     Encoding.UTF8
@@ -41,47 +41,16 @@ public static class {{generatedService}}
         });
 
         // Retrieve method nodes with the cache attribute
-        var methodNodes = initContext.SyntaxProvider.ForAttributeWithMetadataName(
+        var nodes = initContext.SyntaxProvider.ForAttributeWithMetadataName(
             $"{generatedNs}.{generatedAttrib}",
             static (syntaxNode, _) => syntaxNode is BaseMethodDeclarationSyntax,
-            static (context, _) =>
-            {
-                // Get class/method info
-                var containingClass = context.TargetSymbol.ContainingType;
-                var className = containingClass.Name;
-                var ns = containingClass.ContainingNamespace?.ToDisplayString(
-                    SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(
-                        SymbolDisplayGlobalNamespaceStyle.Omitted
-                    )
-                );
-                var method = (IMethodSymbol)context.TargetSymbol;
-                var methodName = method.Name;
-
-                return new CachedMethodNode
-                {
-                    ClassName = className,
-                    ClassStart =
-                        $"{containingClass.DeclaredAccessibility.ToString().ToLower()} {(containingClass.IsStatic ? "static" : "")}",
-                    Namespace = ns,
-                    MethodName = methodName,
-                    ReturnType = method.ReturnType,
-                    ParamsDefinitions = string.Join(
-                        ", ",
-                        method.Parameters.Select(x => x.OriginalDefinition.ToString()).ToList()
-                    ),
-                    ParamsNames = method.Parameters.Select(x => x.Name).ToList(),
-                    MethodStart =
-                        $"{method.DeclaredAccessibility.ToString().ToLower()} {(method.IsStatic ? "static" : "")}",
-                    MethodId = $"{ns}.{className}.{methodName}",
-                    CacheExpiration = (double)context.Attributes[0].ConstructorArguments[0].Value!
-                };
-            }
+            static (context, _) => Helpers.ExtractMethodInfo(context, "Cache")
         );
 
         // Add the final source for the augmented methods
         initContext.RegisterSourceOutput(
-            methodNodes,
-            (context, node) =>
+            nodes,
+            static (context, node) =>
             {
                 var sourceText = SourceText.From(
                     $$"""
@@ -89,21 +58,18 @@ namespace {{node.Namespace}};
 using {{generatedNs}};
 using Microsoft.Extensions.Caching.Memory;
 
-{{node.ClassStart}} partial class {{node.ClassName}}
+{{node.ClassModifiers}} class {{node.ClassName}}{{node.ClassTypeParameters}} {{node.ClassConstraints}}
 {
-    {{node.MethodStart}} {{node.ReturnType}} {{node.MethodName}}Cached({{node.ParamsDefinitions}})
+    {{node.MethodModifiers}} {{node.ReturnType}} {{node.MethodName}}Cached{{node.MethodTypeParameters}}{{node.ParamsDefinitions}} {{node.MethodConstraints}}
     {
-        var key = $"{{node.MethodId}}.{{string.Join(
-                        ".",
-                        node.ParamsNames.Select(x => $"{{{x}}}")
-                    )}}";
+        var key = $"{{node.CacheKey}}";
 
         if ({{generatedService}}.Cache.TryGetValue(key, out {{node.ReturnType}} value))
         {
             return value;
         }
 
-        value = {{node.MethodName}}({{string.Join(", ", node.ParamsNames)}});
+        value = {{node.MethodName}}({{node.ParamsCall}});
         {{generatedService}}.Cache.Set(key, value, TimeSpan.FromMinutes({{node.CacheExpiration}}));
         return value;
     }
@@ -112,7 +78,7 @@ using Microsoft.Extensions.Caching.Memory;
                     Encoding.UTF8
                 );
 
-                context.AddSource($"{node.MethodId}.g.cs", sourceText);
+                context.AddSource($"{node.Filename}.g.cs", sourceText);
             }
         );
     }
