@@ -56,7 +56,6 @@ internal static class {{generatedService}}
                     $$"""
 namespace {{node.Namespace}};
 using {{generatedNs}};
-using System;
 using Microsoft.Extensions.Caching.Memory;
 
 {{node.ClassModifiers}} class {{node.ClassName}}{{node.ClassTypeParameters}} {{node.ClassConstraints}}
@@ -71,7 +70,7 @@ using Microsoft.Extensions.Caching.Memory;
         }
 
         value = {{node.MethodName}}({{node.ParamsCall}});
-        {{generatedService}}.Cache.Set(key, value, TimeSpan.FromMinutes({{node.CacheExpiration}}));
+        {{generatedService}}.Cache.Set(key, value, System.TimeSpan.FromMinutes({{node.CacheExpiration}}));
         return value;
     }
 }

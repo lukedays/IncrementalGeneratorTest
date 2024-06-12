@@ -24,18 +24,36 @@ internal static class Helpers
         var methodName = method.Name;
         var methodSyntax = (MethodDeclarationSyntax)context.TargetNode;
         var classSyntax = (ClassDeclarationSyntax)methodSyntax.Parent!;
-
         var methodId = $"{ns}.{className}.{methodName}";
 
+        // If the type is a collection (i.e. List<string>) we need to iterate to create a unique cache key. If not, the value suffices
         var iCollSymbol = context.SemanticModel.Compilation.GetTypeByMetadataName(
             typeof(ICollection).FullName
         );
         var paramsPlaceholders = method.Parameters.Select(p =>
             ParamHasInterface(p, iCollSymbol)
-                ? $"{{string.Join(\",\", {p.Name}.Select(__param__ => __param__.ToString()))}}"
+                ? $"{{string.Join(\",\", {p.Name}?.Select(__param__ => __param__.ToString()) ?? [])}}"
                 : $"{{{p.Name}}}"
         );
         var cacheKey = $"{methodId}.{string.Join(".", paramsPlaceholders)}";
+
+        // Find full parameter names, with namespace and default values
+        var paramsDefinitions = string.Join(
+            ", ",
+            method.Parameters.Select(p =>
+                p.ToDisplayString(
+                    SymbolDisplayFormat
+                        .FullyQualifiedFormat.WithGlobalNamespaceStyle(
+                            SymbolDisplayGlobalNamespaceStyle.Omitted
+                        )
+                        .WithParameterOptions(
+                            SymbolDisplayParameterOptions.IncludeDefaultValue
+                                | SymbolDisplayParameterOptions.IncludeType
+                                | SymbolDisplayParameterOptions.IncludeName
+                        )
+                )
+            )
+        );
 
         return new MethodNodeInfo
         {
@@ -45,10 +63,7 @@ internal static class Helpers
             ClassTypeParameters = classSyntax.TypeParameterList?.ToString() ?? "",
             Namespace = ns,
             ReturnType = method.ReturnType,
-            ParamsDefinitions = string.Join(
-                ", ",
-                method.Parameters.Select(p => $"{p.Type} {p.Name}")
-            ),
+            ParamsDefinitions = paramsDefinitions,
             ParamsCall = string.Join(", ", method.Parameters.Select(p => p.Name)),
             MethodName = methodName,
             MethodAccessibility = method.DeclaredAccessibility.ToString().ToLower(),

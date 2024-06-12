@@ -1,7 +1,5 @@
 ﻿namespace ConsoleApp;
 
-using System.Collections;
-using Microsoft.Extensions.Caching.Memory;
 using SourceGenerators;
 
 public class Entry
@@ -17,13 +15,13 @@ public partial class UserClass<X>
 {
     public static void TestAll()
     {
-        Console.WriteLine($"Cache test, {nameof(SumCached)}");
-        Console.WriteLine(SumCached(1, 1));
-        Console.WriteLine(SumCached(1, 1));
+        Console.WriteLine($"Cache test, {nameof(TestCached)}");
+        Console.WriteLine(TestCached(1, 1));
+        Console.WriteLine(TestCached(1, 1));
         GenerateCachedMethodService.Cache.Clear();
-        Console.WriteLine(SumCached(1, 1));
-        Console.WriteLine(SumCached(1, 1));
-        Console.WriteLine(SumCached(1, 2));
+        Console.WriteLine(TestCached(1, 1));
+        Console.WriteLine(TestCached(1, 1));
+        Console.WriteLine(TestCached(1, 2));
 
         Console.WriteLine($"Cache test, {nameof(GenericListCached)}");
         List<Rec> recList = [new Rec("a")];
@@ -45,26 +43,16 @@ public partial class UserClass<X>
         Console.WriteLine(DecoratorException("a"));
     }
 
-    public static double GenericList2<T>(List<T> a)
-        where T : class
-    {
-        var key =
-            $"ConsoleApp.UserClass.MethodD.{(a is IEnumerable ? string.Join(".", a.Select(x => x.ToString())) : a.ToString())}";
-
-        if (GenerateCachedMethodService.Cache.TryGetValue(key, out double value))
-        {
-            return value;
-        }
-
-        value = GenericList(a);
-        GenerateCachedMethodService.Cache.Set(key, value, TimeSpan.FromMinutes(30));
-        return value;
-    }
-
     public record Rec(string a);
 
     [GenerateCachedMethod]
-    public static double Sum(double a, double b)
+    public static double Test(
+        double a,
+        int b,
+        string c = "a",
+        List<string>? x = default,
+        DateTime y = default
+    )
     {
         Console.Write("Not cached ");
         return a + b;
