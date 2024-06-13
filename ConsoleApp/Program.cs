@@ -1,6 +1,6 @@
 ﻿namespace ConsoleApp;
 
-using SourceGenerators;
+using SourceGenerator;
 
 public class Entry
 {

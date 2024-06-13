@@ -5,7 +5,7 @@ VisualStudioVersion = 17.9.34714.143
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleApp", "ConsoleApp\ConsoleApp.csproj", "{991D0BB7-744C-4776-9FB8-02B709F4E6D0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SourceGenerators", "SourceGenerators\SourceGenerators.csproj", "{7B11CC2A-2927-4407-83C7-7184D4FEFD7D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SourceGenerator.Core", "SourceGenerator.Core\SourceGenerator.Core.csproj", "{7B11CC2A-2927-4407-83C7-7184D4FEFD7D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{1CB29828-A16A-4388-A89F-C70C560796D6}"
 	ProjectSection(SolutionItems) = preProject
@@ -16,6 +16,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PostsharpApp", "PostsharpApp\PostsharpApp.csproj", "{920F1A20-99A8-4FCE-823A-6F171EB773FD}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleApp2", "ConsoleApp2\ConsoleApp2.csproj", "{2E1AAAC9-A68E-4C13-85C5-F6B499A6FB5C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SourceGenerator", "SourceGenerator\SourceGenerator.csproj", "{0A73C461-B842-4494-AF36-E6932DC72DB5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{2E1AAAC9-A68E-4C13-85C5-F6B499A6FB5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2E1AAAC9-A68E-4C13-85C5-F6B499A6FB5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2E1AAAC9-A68E-4C13-85C5-F6B499A6FB5C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A73C461-B842-4494-AF36-E6932DC72DB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A73C461-B842-4494-AF36-E6932DC72DB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A73C461-B842-4494-AF36-E6932DC72DB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A73C461-B842-4494-AF36-E6932DC72DB5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

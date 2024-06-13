@@ -1,14 +1,14 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System.Text;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
-using System.Text;
 
-namespace SourceGenerators.Generators;
+namespace SourceGenerator.Core;
 
 [Generator]
 public class GenerateCachedMethodGenerator : IIncrementalGenerator
 {
-    const string generatedNs = nameof(SourceGenerators);
+    const string generatedNs = nameof(SourceGenerator);
     const string generatedAttrib = nameof(GenerateCachedMethodAttribute);
     const string generatedService = nameof(GenerateCachedMethodService);
 

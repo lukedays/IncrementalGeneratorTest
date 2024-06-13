@@ -1,4 +1,4 @@
-﻿namespace SourceGenerators;
+﻿namespace SourceGenerator;
 
 public interface IDecorator
 {

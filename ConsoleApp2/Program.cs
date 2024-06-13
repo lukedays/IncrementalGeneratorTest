@@ -1,6 +1,6 @@
 ﻿namespace ConsoleApp2;
 
-using SourceGenerators;
+using SourceGenerator;
 
 public partial class ConsoleApp2
 {
