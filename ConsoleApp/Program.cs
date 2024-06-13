@@ -18,7 +18,7 @@ public partial class UserClass<X>
         Console.WriteLine($"Cache test, {nameof(TestCached)}");
         Console.WriteLine(TestCached(1, 1));
         Console.WriteLine(TestCached(1, 1));
-        GenerateCachedMethodService.Cache.Clear();
+        CacheMethodService.Cache.Clear();
         Console.WriteLine(TestCached(1, 1));
         Console.WriteLine(TestCached(1, 1));
         Console.WriteLine(TestCached(1, 2));
@@ -32,7 +32,7 @@ public partial class UserClass<X>
 
         Console.WriteLine($"Cache test, {nameof(ConsoleApp2.ConsoleApp2.SumOtherCached)}");
         Console.WriteLine(ConsoleApp2.ConsoleApp2.SumOtherCached(1, 1));
-        GenerateCachedMethodService.Cache.Clear();
+        CacheMethodService.Cache.Clear();
         Console.WriteLine(ConsoleApp2.ConsoleApp2.SumOtherCached(1, 1));
         Console.WriteLine(ConsoleApp2.ConsoleApp2.SumOtherCached(1, 1));
 

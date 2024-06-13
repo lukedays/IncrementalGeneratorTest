@@ -2,7 +2,7 @@
 
 namespace SourceGenerator;
 
-public static class GenerateCachedMethodService
+public static class CacheMethodService
 {
     public static readonly MemoryCache Cache = new(new MemoryCacheOptions());
 }

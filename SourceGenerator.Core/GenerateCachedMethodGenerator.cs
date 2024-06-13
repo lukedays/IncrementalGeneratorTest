@@ -10,7 +10,7 @@ public class GenerateCachedMethodGenerator : IIncrementalGenerator
 {
     const string generatedNs = nameof(SourceGenerator);
     const string generatedAttrib = nameof(GenerateCachedMethodAttribute);
-    const string generatedService = nameof(GenerateCachedMethodService);
+    const string generatedService = nameof(CacheMethodService);
 
     public void Initialize(IncrementalGeneratorInitializationContext initContext)
     {
