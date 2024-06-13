@@ -4,16 +4,16 @@ using SourceGenerator;
 
 public class Entry
 {
-    public static void Main()
+    public static async Task Main()
     {
-        UserClass<List<string>>.TestAll();
+        await UserClass<List<string>>.TestAll();
     }
 }
 
 public partial class UserClass<X>
     where X : IList<string>
 {
-    public static void TestAll()
+    public static async Task TestAll()
     {
         Console.WriteLine($"Cache test, {nameof(TestCached)}");
         Console.WriteLine(TestCached(1, 1));
@@ -40,7 +40,13 @@ public partial class UserClass<X>
         Console.WriteLine(Decorator("a"));
 
         Console.WriteLine($"Decorator test, {nameof(DecoratorException)}");
-        Console.WriteLine(DecoratorException("a"));
+        Console.WriteLine(DecoratorException());
+
+        Console.WriteLine($"Decorator test, {nameof(DecoratorVoid)}");
+        DecoratorVoid();
+
+        Console.WriteLine($"Decorator test, {nameof(DecoratorTask)}");
+        await DecoratorTask();
     }
 
     public record Rec(string a);
@@ -66,7 +72,20 @@ public partial class UserClass<X>
     }
 
     [GenerateDecoratedMethod(nameof(ExampleDecorator))]
-    private static string DecoratorExceptionInner(string a)
+    private static void DecoratorVoidInner()
+    {
+        Console.WriteLine("Void");
+    }
+
+    [GenerateDecoratedMethod(nameof(ExampleDecorator))]
+    private static async Task DecoratorTaskInner()
+    {
+        await Task.Delay(1);
+        Console.WriteLine("Task");
+    }
+
+    [GenerateDecoratedMethod(nameof(ExampleDecorator))]
+    private static string DecoratorExceptionInner()
     {
         throw new Exception("Oops");
     }
