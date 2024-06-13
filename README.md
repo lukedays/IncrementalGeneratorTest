@@ -8,7 +8,10 @@ Clone the project. Build profiles: `ConsoleApp` for the target code, and `Genera
 
 ### Known bugs
 
-Unfortunately VS 2022 (v. 17.10.0) [needs to be restarted](https://github.com/dotnet/roslyn/issues/50451) for Intellisense to pick up changes in the source generator project - so I found the [Source Generators Auto Update VS extension](https://marketplace.visualstudio.com/items?itemName=AlexanderGayko.AutoUpdateAssemblyName&ssr=false#review-details) to fix this. Changes in the target project work normally.
+Unfortunately VS 2022 (v. 17.10.0) [needs to be restarted](https://github.com/dotnet/roslyn/issues/50451) for Intellisense to pick up changes in the source generator project. Also, debug breakpoints don't hit on the source generated files, and intellisense doesn't pick up the references.
+Workarounds:
+- Generate files in the project folder as [described here](https://github.com/dotnet/roslyn/issues/44093), but this also generates error CS0121 - ambigous reference
+- [Source Generators Auto Update VS extension](https://marketplace.visualstudio.com/items?itemName=AlexanderGayko.AutoUpdateAssemblyName&ssr=false#review-details)
 
 ### GenerateCachedMethod attribute
 

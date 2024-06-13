@@ -1,6 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 
-namespace SourceGenerators;
+namespace SourceGenerators.Generators;
 
 public record MethodNodeInfo
 {
